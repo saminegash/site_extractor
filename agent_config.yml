@@ -21,6 +21,12 @@ doc_search:
     embedding_function: ${embedding_func}
     k: 4
 
+html_loader:
+  _target_: actions.HTMLLoader
+  filename: tender.html
+  embedding_function: ${embedding_func}
+  k: 4
+
 qa_agent:
     _target_: sherpa_ai.agents.qa_agent.QAAgent
     llm: ${llm}
@@ -31,3 +37,4 @@ qa_agent:
     num_runs: 1
     actions:
         - ${doc_search}
+        - ${html_loader}

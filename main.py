@@ -5,6 +5,7 @@ from omegaconf import OmegaConf  # type: ignore
 
 from sherpa_ai.agents import QAAgent  # type: ignore
 from sherpa_ai.events import EventType  # type: ignore
+from extractor import extractor
 
 
 def get_qa_agent_from_config_file(
@@ -32,6 +33,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     qa_agent = get_qa_agent_from_config_file(args.config)
+    extractor()
 
     while True:
         question = input("Ask me a question: ")
