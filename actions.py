@@ -4,6 +4,11 @@ from langchain.text_splitter import SentenceTransformersTokenTextSplitter
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
 from pydantic import ConfigDict
+from langchain.document_loaders import UnstructuredHTMLLoader
+# from html_loader import BeautifulSoupLoader
+from bs4 import BeautifulSoup  # type: ignore
+from langchain.document_loaders.base import BaseLoader  # type: ignore
+
 
 from sherpa_ai.actions.base import BaseAction
 
@@ -11,7 +16,9 @@ from sherpa_ai.actions.base import BaseAction
 class DocumentSearch(BaseAction):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     # file name of the pdf
-    filename: str
+    pdf_filename: str
+
+    html_filename: str
     # the embedding function to use
     embedding_function: Embeddings
     # number of results to return in search
@@ -32,11 +39,19 @@ class DocumentSearch(BaseAction):
 
         # load the pdf and create the vector store
         self._chroma = Chroma(embedding_function=self.embedding_function)
-        documents = PDFMinerLoader(self.filename).load()
-        documents = SentenceTransformersTokenTextSplitter(
-            chunk_overlap=0
-        ).split_documents(documents)
 
+        pdf_documents = PDFMinerLoader(self.pdf_filename).load()
+        pdf_documents = SentenceTransformersTokenTextSplitter(
+            chunk_overlap=0
+        ).split_documents(pdf_documents)
+        print(pdf_documents)
+
+        html_documents = UnstructuredHTMLLoader(self.html_filename).load()
+        html_documents = SentenceTransformersTokenTextSplitter(
+            chunk_overlap=0
+        ).split_documents(html_documents)
+        print(html_documents)
+        documents = pdf_documents + html_documents
         logger.info(f"Adding {len(documents)} documents to the vector store")
         self._chroma.add_documents(documents)
         logger.info("Finished adding documents to the vector store")
@@ -52,3 +67,15 @@ class DocumentSearch(BaseAction):
 
         results = self._chroma.search(query, search_type="mmr", k=self.k)
         return "\n\n".join([result.page_content for result in results])
+
+
+class BeautifulSoupLoader(BaseLoader):
+    def __init__(self, filename):
+        self.filename = filename
+
+    def load(self):
+        with open(self.filename, 'r', encoding='utf-8') as file:
+            content = file.read()
+        soup = BeautifulSoup(content, 'html.parser')
+        texts = [element.get_text(strip=True) for element in soup.find_all()]
+        return [{"page_content": "\n".join(texts)}]

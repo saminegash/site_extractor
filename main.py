@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import asyncio
 
 from hydra.utils import instantiate  # type: ignore
 from omegaconf import OmegaConf  # type: ignore
@@ -6,6 +7,7 @@ from omegaconf import OmegaConf  # type: ignore
 from sherpa_ai.agents import QAAgent  # type: ignore
 from sherpa_ai.events import EventType  # type: ignore
 from extractor import extractor
+from change_agent_config import update_yaml
 
 
 def get_qa_agent_from_config_file(
@@ -28,18 +30,26 @@ def get_qa_agent_from_config_file(
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--config", type=str, default="agent_config.yaml")
-    args = parser.parse_args()
+    # Specify your YAML file here
+    yaml_file = 'agent_config.yml'
+    update_yaml(yaml_file)
 
-    qa_agent = get_qa_agent_from_config_file(args.config)
-    extractor()
+    async def main():
+        parser = ArgumentParser()
+        parser.add_argument("--config", type=str, default="agent_config.yaml")
+        args = parser.parse_args()
 
-    while True:
-        question = input("Ask me a question: ")
+        qa_agent = get_qa_agent_from_config_file(args.config)
+        await extractor()
 
-        # Add the question to the shared memory. By default, the agent will take the last
-        # message in the shared memory as the task.
-        qa_agent.shared_memory.add(EventType.task, "human", question)
-        result = qa_agent.run()
-        print(result)
+        while True:
+            question = input("Ask me a question: ")
+
+            # Add the question to the shared memory. By default, the agent will take the last
+            # message in the shared memory as the task.
+            qa_agent.shared_memory.add(EventType.task, "human", question)
+            result = qa_agent.run()
+            print(result)
+
+    if __name__ == "__main__":
+        asyncio.run(main())

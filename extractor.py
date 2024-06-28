@@ -47,33 +47,22 @@ def extractor():
     html_content = driver.page_source
 
     # Parse the HTML content with BeautifulSoup
-    soup = BeautifulSoup(html_content, 'html.parser')
 
-    # Extract the body content
-    body_content = soup.body
+    # for tag in body_content.find_all():
+    #     if tag.string:
+    #         words = tag.string.split()
+    #         if len(words) < 10:
+    #             tag.decompose()
+    #     else:
+    #         text = tag.get_text(" ", strip=True)
+    #         words = text.split()
+    #         if len(words) < 10:
+    #             tag.decompose()
 
-    # Remove all <script> tags
-    for script in body_content.find_all('script'):
-        script.decompose()
-
-    for style in body_content.find_all('style'):
-        style.decompose()
-
-    for tag in body_content.find_all():
-        if tag.string:
-            words = tag.string.split()
-            if len(words) < 10:
-                tag.decompose()
-        else:
-            text = tag.get_text(" ", strip=True)
-            words = text.split()
-            if len(words) < 10:
-                tag.decompose()
-
-    body_str = str(body_content).replace('\u00a0', ' ')
+    # body_str = str(body_content).replace('\u00a0', ' ')
 
     with open("tender.html", "w", encoding="utf-8") as file:
-        file.write(body_str)
+        file.write(str(html_content))
 
     # download pdf
     driver.find_element(By.ID, 'ext-gen113').click()
@@ -91,3 +80,6 @@ def extractor():
     time.sleep(30)
     # Close the driver
     driver.quit()
+
+
+extractor()
